@@ -5,10 +5,8 @@ int main(int argc, char* argv[]){
 		cout << "\nUsage is ./serverSNFS -port port# -mount directory" << endl;
 		exit(EXIT_FAILURE);	
 	}
-	
 	check_values(argv[1], "-port");
 	check_port(argv[2], "port#");
-	int port = argv[2];
 	check_values(argv[3], "-mount");
 	
 	
