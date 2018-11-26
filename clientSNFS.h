@@ -17,7 +17,7 @@
 using namespace std;
 using namespace boost::filesystem;
 
-void * socketThread(void *);
+void * clientThread(void *);
 void check_values(string, string);
 void check_port(string, string);
 void check_directory(path);
