@@ -9,13 +9,84 @@ int main(int argc, char* argv[]){
 	check_port(argv[2], "port#");
 	int serverPort = stoi(argv[2]);
 	check_values(argv[3], "-serveraddress");	
-	string server = argv[4];
+	const char* server = argv[4];
+	cout << server << endl;
 	check_values(argv[5], "-mount");
 	//get path of mountable file
 	path curr_path = current_path(); //gets current path
 	path p = argv[6];
 	path client_directory = curr_path / p;
 	check_directory(client_directory);
+	
+	
+	struct sockaddr_in serverAddress;
+	struct hostent *hostp;
+	int clientSocket;
+	int rc;
+	socklen_t addr_size;
+	char buffer[1024];
+	char client_msg[5000];
+	
+	if((clientSocket = socket(PF_INET, SOCK_STREAM, 0)) < 0){
+  		cout << "Client socket error" << endl;
+		exit(EXIT_FAILURE);
+	}
+	else{
+		cout << "Client socket successful." << endl;
+	}
+	
+	// Configure settings of the server address struct
+	serverAddress.sin_family = AF_INET; // Address = Internet
+	serverAddress.sin_port = htons(serverPort); // Set port Number
+	
+	//Set IP to serverIP
+	serverAddress.sin_addr.s_addr = inet_addr(server);
+	
+	if((serverAddress.sin_addr.s_addr = inet_addr(server)) == (unsigned long)INADDR_NONE)	{
+		hostp = gethostbyname(server);
+        if(hostp == (struct hostent *)NULL){
+            printf("HOST NOT FOUND --> ");
+            /* h_errno is usually defined */
+            /* in netdb.h */
+            printf("h_errno = %d\n",h_errno);
+            printf("---This is a client program---\n");
+            printf("Command usage: %s <server name or IP>\n", argv[0]);
+            close(clientSocket);
+            exit(-1);
+        }
+		memcpy(&serverAddress.sin_addr, hostp->h_addr, sizeof(serverAddress.sin_addr)); 
+	}
+	
+	//Set bits of the padding field to 0 
+	memset(serverAddress.sin_zero, '\0', sizeof(serverAddress.sin_zero));
+	
+	//Connect the socket to the server using the address
+   addr_size = sizeof(serverAddress);
+	
+	if((rc = connect(clientSocket, (struct sockaddr *)&serverAddress, addr_size)) < 0)
+    {
+        cout << "Client-connect() error" << endl;
+        close(clientSocket);
+        exit(EXIT_FAILURE);
+    }
+    else
+        cout << "Client-connect() established" << endl;
+        
+	strcpy(client_msg,"TEST");
+	//Send msg to server
+	if( send(clientSocket , client_msg , strlen(client_msg) , 0) < 0){
+		cout << "Client Send failed\n" << endl;
+   }
+   
+   //Read the message from the server into the buffer
+    if(recv(clientSocket, buffer, sizeof(buffer), 0) < 0){
+       cout << "Receive failed\n" << endl;
+    }
+    
+    //Print the received message
+    cout << "Data received: " << buffer << endl;
+    close(clientSocket);
+    
 }
 
 //checks to see if two values are the same

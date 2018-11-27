@@ -108,8 +108,9 @@ void * socketThread(void *arg){
   	strcpy(buffer,message);
   	free(message);
   	pthread_mutex_unlock(&lock);
-  	sleep(1);
-  	send(newSocket,buffer,13,0);
+  	sleep(100);
+  	cout << buffer << endl;
+  	send(newSocket,buffer,sizeof(buffer),0);
   	printf("Exit socketThread \n");
   	close(newSocket);
   	pthread_exit(NULL);
