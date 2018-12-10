@@ -12,7 +12,7 @@
 #include <unistd.h>
 #include <boost/filesystem.hpp>
 #include <sys/socket.h>
-
+#include <fuse.h>
 
 using namespace std;
 using namespace boost::filesystem;

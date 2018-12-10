@@ -1,4 +1,86 @@
+#define FUSE_USE_VERSION 26
 #include "clientSNFS.h"
+
+
+
+//open todo
+extern "C" int fuse_fs_open(struct fuse_fs *fs, const char *path, struct fuse_file_info *fi)
+{
+	return 0;
+}
+
+
+//write TODO	
+extern "C" int fuse_write(const char *pathStr, const char *data, size_t size, off_t offset, struct fuse_file_info *)
+{
+	return 0;
+}
+
+//create TODO
+extern "C" int fuse_create(const char* pathStr, mode_t mode, struct fuse_file_info *fileInfo)
+{
+	return 0;
+}
+
+//OPENDIR TODO
+extern "C" int fuse_opendir(const char *, struct fuse_file_info *)
+{
+	return 0;
+}
+
+//open TODO
+extern "C" int fuse_open(const char *pathStr, struct fuse_file_info *)
+{
+	return 0;
+}
+
+
+// flush TODO
+extern "C" int fuse_flush(const char *pathStr, struct fuse_file_info *)
+{
+	return 0;
+}
+
+
+//truncate TODO
+extern "C" int fuse_truncate(const char *pathStr, off_t length)
+{
+	return 0;
+}
+
+
+
+// readir TODO
+extern "C" int fuse_readdir(const char* pathStr, void* buf, fuse_fill_dir_t filler,
+		off_t offset, struct fuse_file_info *fi)
+{
+	return 0;
+}
+
+extern "C" int fuse_release(const char *pathStr, struct fuse_file_info *)
+{
+	return 0;
+}
+
+// mkdir
+// TODO
+extern "C" int fuse_mkdir(const char* pathStr, mode_t mode)
+{
+	return 0;
+}
+
+// getattr
+// TODO
+extern "C" int fuse_getattr(const char* pathStr, struct stat* info)
+{
+	return 0;
+
+}
+
+//assign functions in main
+static struct fuse_operations fuse_oper = {
+		0,
+};
 
 int main(int argc, char* argv[]){
 	if(argc != 7){
@@ -18,7 +100,20 @@ int main(int argc, char* argv[]){
 	path client_directory = curr_path / p;
 	check_directory(client_directory);
 	
-	
+	fuse_oper.open = fuse_open;
+	fuse_oper.create = fuse_create;
+	fuse_oper.release = fuse_release;
+	fuse_oper.getattr = fuse_getattr;
+	fuse_oper.readdir = fuse_readdir;
+	fuse_oper.truncate = fuse_truncate;
+	fuse_oper.flush = fuse_flush;
+	fuse_oper.opendir = fuse_opendir;
+	fuse_oper.write = fuse_write;
+	fuse_oper.mkdir = fuse_mkdir;
+	fuse_oper.getattr = fuse_getattr;
+
+
+
 	struct sockaddr_in serverAddress;
 	struct hostent *hostp;
 	int clientSocket;
