@@ -1,7 +1,5 @@
 #include "serverSNFS.h"
 
-char buffer[1024];
-char client_msg[5000];
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
 int main(int argc, char* argv[]){
@@ -96,24 +94,39 @@ int main(int argc, char* argv[]){
 
 
 void * socketThread(void *arg){
-	
+	char server_msg[150];
+	char client_msg[150];
 	int newSocket = *((int *)arg);
-  	recv(newSocket , client_msg , 2000 , 0);
-  // Send message to the client socket 
-  	pthread_mutex_lock(&lock);
-  	char *message = (char*)malloc(sizeof(client_msg)+20);
-  	strcpy(message,"Hello Client : ");
-  	strcat(message,client_msg);
-  	strcat(message,"\n");
-  	strcpy(buffer,message);
-  	free(message);
-  	pthread_mutex_unlock(&lock);
-  	sleep(100);
-  	cout << buffer << endl;
-  	send(newSocket,buffer,sizeof(buffer),0);
-  	printf("Exit socketThread \n");
+	
+	while(1){
+		memset(client_msg, 0, sizeof(client_msg));
+		memset(server_msg, 0, sizeof(server_msg));
+  		if(recv(newSocket , client_msg , sizeof(client_msg) , 0) < 0){
+  			cout << "Receive from client failed\n" << endl;
+  			cout << "Exit socketThread" << endl;
+			close(newSocket);
+			return 0;
+  		}
+  		// Send message to the client socket 
+  		//pthread_mutex_lock(&lock);
+  		strcpy(server_msg,"Message ");
+  		strcat(server_msg, client_msg);
+  		strcat(server_msg, " recieved by server");
+  	
+  		//pthread_mutex_unlock(&lock);
+  		cout << "Recieved from Client: " << client_msg << endl;
+  		if(send(newSocket,server_msg,sizeof(server_msg),0) < 0){
+  			cout << "Send to client failed\n" << endl;
+  			cout << "Exit socketThread" << endl;
+			close(newSocket);
+			return 0;
+  		}
+  		if(strcmp(client_msg,"Quit") == 0){
+			break;  		
+  		}
+  	}
+  	cout << "Exit socketThread" << endl;
   	close(newSocket);
-  	pthread_exit(NULL);
 }
 
 
