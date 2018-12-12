@@ -1,89 +1,272 @@
 #define FUSE_USE_VERSION 26
 #include "clientSNFS.h"
 
+int clientSocket;
 
-
-//open todo
-extern "C" int fuse_fs_open(struct fuse_fs *fs, const char *path, struct fuse_file_info *fi)
-{
-	return 0;
-}
-
+//assign functions in main
+static struct fuse_operations fuse_oper = {
+	0,
+};
 
 //write TODO	
-extern "C" int fuse_write(const char *pathStr, const char *data, size_t size, off_t offset, struct fuse_file_info *)
+extern "C" int fuse_write(const char *path, const char *data, size_t size, off_t offset, struct fuse_file_info *)
 {
+	int rc;
+	char msg[5000];
+	char response[1000];
+	strcpy(msg, "");
+	strcat(msg, "write ");
+	strcat(msg, path);
+	strcat(msg, " ");
+	strcat(msg, data);
+	strcat(msg, " ");
+
+	char offsetS[200];
+	sprintf(offsetS, "%llu", offset);
+	strcat(msg, &offsetS[0]);
+	cout << msg << endl;
+	
+	rc = send(clientSocket , msg , strlen(msg) , 0);
+	if(rc < 0){
+		cout << "failed to send write\n" << endl;
+		return rc;
+	}
+	rc = recv(clientSocket, response, sizeof(response), 0);
+	if(rc < 0){
+		cout << "failed to recieve write response\n" << endl;
+		return rc;
+	}
+	
 	return 0;
 }
 
-//create TODO
-extern "C" int fuse_create(const char* pathStr, mode_t mode, struct fuse_file_info *fileInfo)
+//create
+// for now just assume all created files have RW access
+extern "C" int fuse_create(const char* path, mode_t mode, struct fuse_file_info *fileInfo)
 {
-	return 0;
+	int rc;
+	char msg[5000];
+	char response[1000];
+	strcpy(msg, "");
+	strcat(msg, "create ");
+	strcat(msg, path);
+
+	cout << msg << endl;
+	rc = send(clientSocket , msg , strlen(msg) , 0);
+	if(rc < 0){
+		cout << "failed to send create message\n" << endl;
+		return rc;
+	}
+	rc = recv(clientSocket, response, sizeof(response), 0);
+	if(rc < 0){
+		cout << "failed to receive create response\n" << endl;
+		return rc;
+	}
+	return rc;
 }
 
 //OPENDIR TODO
-extern "C" int fuse_opendir(const char *, struct fuse_file_info *)
+// not sure what use this has since readdir displays files
+extern "C" int fuse_opendir(const char *path, struct fuse_file_info *fi)
 {
+	cout << "opendir called" << endl;
 	return 0;
 }
 
 //open TODO
-extern "C" int fuse_open(const char *pathStr, struct fuse_file_info *)
+//
+extern "C" int fuse_open(const char *path, struct fuse_file_info *fi)
 {
-	return 0;
+	int rc;
+	char msg[5000];
+	char response[1000];
+	strcpy(msg, "");
+	strcat(msg, "open ");
+	strcat(msg, path);
+	cout << msg << endl;
+
+	rc = send(clientSocket , msg , strlen(msg) , 0);
+	if(rc < 0){
+		cout << "failed to send open message\n" << endl;
+		return rc;
+	}
+	rc = recv(clientSocket, response, sizeof(response), 0);
+	if(rc < 0){
+		cout << "failed to receive open response\n" << endl;
+		return rc;
+	}
+	
+	
+	return rc;
 }
 
 
 // flush TODO
-extern "C" int fuse_flush(const char *pathStr, struct fuse_file_info *)
+// not sure what this does
+extern "C" int fuse_flush(const char *pathStr, struct fuse_file_info *fi)
 {
 	return 0;
 }
 
 
 //truncate TODO
-extern "C" int fuse_truncate(const char *pathStr, off_t length)
+// Change the zie of the file to length
+extern "C" int fuse_truncate(const char *path, off_t length)
 {
+	int rc;
+	char msg[5000];
+	char response[1000];
+	strcpy(msg, "");
+	strcat(msg, "truncate ");
+	strcat(msg, path);
+	strcat(msg, " ");
+
+	char offsetS[200];
+	sprintf(offsetS, "%llu", length);
+	strcat(msg, &offsetS[0]);
+	//strcat(msg, " ");
+	cout << msg << endl;
+
+	rc = send(clientSocket , msg , strlen(msg) , 0);
+	if(rc < 0){
+		cout << "failed to send truncate\n" << endl;
+		return rc;
+	}
+	rc = recv(clientSocket, response, sizeof(response), 0);
+	if(rc < 0){
+		cout << "failed to recieve truncate response\n" << endl;
+		return rc;
+	}
+
 	return 0;
 }
 
 
 
 // readir TODO
-extern "C" int fuse_readdir(const char* pathStr, void* buf, fuse_fill_dir_t filler,
+extern "C" int fuse_readdir(const char* path, void* buf, fuse_fill_dir_t filler,
 		off_t offset, struct fuse_file_info *fi)
 {
+	char msg[5000];
+	char response[1024];
+	strcpy(msg, "");
+	strcat(msg, "readdir ");
+	strcat(msg, path);
+	strcat(msg, " ");
+	char offsetS[200]; // convert offset to char*
+	sprintf(offsetS, "%llu", offset);
+	strcat(msg, &offsetS[0]);
+	cout << msg << endl;
+	
+	if( send(clientSocket , msg , strlen(msg) , 0) < 0){
+		cout << "client failed to send readdir message\n" << endl;
+		return -1;
+    }
+	
+	if(recv(clientSocket, response, sizeof(response), 0) < 0){
+       cout << "client failed to recieve readdir response\n" << endl;
+	   return -1;
+    } 
+	//split response by spaces and add all files to filler
+	char * split;
+	split = strtok (response," ");
+	while (split != NULL){
+		filler(buf, split, NULL, 0);
+		split = strtok (NULL, " ");
+	}
+
 	return 0;
 }
-
+//todo release 
+//don't know what this does
 extern "C" int fuse_release(const char *pathStr, struct fuse_file_info *)
 {
 	return 0;
 }
 
 // mkdir
-// TODO
-extern "C" int fuse_mkdir(const char* pathStr, mode_t mode)
-{
-	return 0;
+extern "C" int fuse_mkdir(const char* path, mode_t mode)
+{	
+	int rc = 0;
+	char response[1024];
+	char msg[5000];
+	strcpy(msg, "");
+	strcat(msg, "mkdir ");
+	strcat(msg, path);
+
+	cout << msg << endl;
+	
+	rc = send(clientSocket , msg , strlen(msg) , 0);
+	if(rc < 0){
+		cout << "client failed to send mkdir message\n" << endl;
+		return rc;
+	}
+	rc =recv(clientSocket, response, sizeof(response), 0);
+	if(rc < 0){
+		cout << "client failed to recieve mkdir response\n" << endl;
+	}
+	
+	return rc;
+	
 }
 
 // getattr
 // TODO
-extern "C" int fuse_getattr(const char* pathStr, struct stat* info)
+extern "C" int fuse_getattr(const char* path, struct stat* st)
 {
-	return 0;
+	char msg[5000];
+	strcpy(msg, "");
+	strcat(msg, "getattr ");
+	strcat(msg, path);
+	strcat(msg, " ");
+	cout << msg << endl;
 
+	st->st_uid = getuid(); // The owner of the file/directory is the user who mounted the filesystem
+	st->st_gid = getgid(); // The group of the file/directory is the same as the group of the user who mounted the filesystem
+	st->st_atime = time( NULL ); // The last "a"ccess of the file/directory is right now
+	st->st_mtime = time( NULL );
+	if(strcmp(path, "/") == 0){
+		st->st_mode = S_IFDIR | 0755;
+		st->st_nlink = 2;
+	} else {
+		st->st_mode = S_IFREG | 0644;
+		st->st_nlink = 1;
+		st->st_size = 1024;
+	}
+	return 0;
 }
 
-//assign functions in main
-static struct fuse_operations fuse_oper = {
-		0,
-};
+extern "C" int fuse_read (const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fi){
+	char msg[5000];
+	strcpy(msg, "");
+	strcat(msg, "read ");
+	strcat(msg, path);
+	strcat(msg, " ");
+	
+ 
+ 	char sizeStr[256] = "";
+
+    snprintf(sizeStr, sizeof sizeStr, "%zu", size);
+	strcat(msg, sizeStr);
+	strcat(msg, " ");
+
+	char offsetS[200];
+	sprintf(offsetS, "%llu", offset);
+	strcat(msg, &offsetS[0]);
+	//strcat(msg, " ");
+	cout << msg << endl;
+	/*
+	if( send(clientSocket , msg , strlen(msg) , 0) < 0){
+		cout << "Client Send failed\n" << endl;
+    }
+	cout << "yo" << endl; */
+	return 0;
+}
+
+
 
 int main(int argc, char* argv[]){
-	if(argc != 7){
+	if(argc < 7){
 		cout << "Usage is ./clientSNFS -serverport port# -serveraddress address# -mount directory" << endl;
 		exit(EXIT_FAILURE);	
 	}
@@ -92,13 +275,8 @@ int main(int argc, char* argv[]){
 	int serverPort = stoi(argv[2]);
 	check_values(argv[3], "-serveraddress");	
 	const char* server = argv[4];
-	cout << server << endl;
+	cout << "server is: " << server << endl;
 	check_values(argv[5], "-mount");
-	//get path of mountable file
-	path curr_path = current_path(); //gets current path
-	path p = argv[6];
-	path client_directory = curr_path / p;
-	check_directory(client_directory);
 	
 	fuse_oper.open = fuse_open;
 	fuse_oper.create = fuse_create;
@@ -111,12 +289,13 @@ int main(int argc, char* argv[]){
 	fuse_oper.write = fuse_write;
 	fuse_oper.mkdir = fuse_mkdir;
 	fuse_oper.getattr = fuse_getattr;
-
-
-
+	fuse_oper.read = fuse_read;
+	
+	
+	
 	struct sockaddr_in serverAddress;
 	struct hostent *hostp;
-	int clientSocket;
+	
 	int rc;
 	socklen_t addr_size;
 	char buffer[1024];
@@ -141,8 +320,8 @@ int main(int argc, char* argv[]){
 		hostp = gethostbyname(server);
         if(hostp == (struct hostent *)NULL){
             printf("HOST NOT FOUND --> ");
-            /* h_errno is usually defined */
-            /* in netdb.h */
+            // h_errno is usually defined 
+            // in netdb.h 
             printf("h_errno = %d\n",h_errno);
             printf("---This is a client program---\n");
             printf("Command usage: %s <server name or IP>\n", argv[0]);
@@ -166,21 +345,9 @@ int main(int argc, char* argv[]){
     }
     else
         cout << "Client-connect() established" << endl;
-        
-	strcpy(client_msg,"TEST");
-	//Send msg to server
-	if( send(clientSocket , client_msg , strlen(client_msg) , 0) < 0){
-		cout << "Client Send failed\n" << endl;
-   }
-   
-   //Read the message from the server into the buffer
-    if(recv(clientSocket, buffer, sizeof(buffer), 0) < 0){
-       cout << "Receive failed\n" << endl;
-    }
-    
-    //Print the received message
-    cout << "Data received: " << buffer << endl;
-    close(clientSocket);
+    char** fuseArgs;
+	fuseArgs[0] = argv[6]; // fuse just needs the path for the directory
+	int result = fuse_main(argc, fuseArgs, &fuse_oper, NULL);
     
 }
 
