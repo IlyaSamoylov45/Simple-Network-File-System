@@ -110,7 +110,7 @@ void * socketThread(void *arg){
   			cout << "Returning all filenames from the given directory" << endl;
   			cout << "Recieved from Client: " << client_msg << endl;
   			
-  			if(client_msg[8] != '/' || client_msg[9] == '\0' || client_msg[9] == ' '){
+  			if(client_msg[8] != '/'){
 				cout << "Incorrect format" << endl; 
 				strcpy(server_msg,"Incorrect format recieved by server no '/': ");
   				strcat(server_msg, client_msg);
@@ -128,8 +128,8 @@ void * socketThread(void *arg){
 				const char * fileNames = getNames.c_str();
 				strcpy(server_msg, fileNames);
 			}
-			
   		}
+  		
   		else if (strncmp(client_msg, "read", 4) == 0) {
   			cout << "Reading bytes from file" << endl;
   			cout << "Recieved from Client: " << client_msg << endl;
