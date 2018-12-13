@@ -98,7 +98,7 @@ void * socketThread(void *arg){
 	char server_msg[150];
 	char client_msg[150];
 	int newSocket = *((int *)arg);
-	ifstream inFile;
+	fstream inFile;
 	string openfilename = "";
 	while(1){
 		memset(client_msg, 0, sizeof(client_msg));
@@ -160,7 +160,7 @@ void * socketThread(void *arg){
 					offset += client_msg[i];
 					i++;			
 			}
-			if(!is_digits(size) || !is_digits(offset)){
+			if(!is_digits(size) || !is_digits(offset) || size.empty() || offset.empty()){
 				cout << "Incorrect format" << endl;
 				strcpy(server_msg,"Incorrect format recieved by server digit error: ");
   				strcat(server_msg, client_msg);
@@ -187,11 +187,14 @@ void * socketThread(void *arg){
 				int total = stoi(size);
 				int start = stoi(offset);
 				cout << "Starting at: " << offset << ", total is: " << total << endl;
-				inFile.seekg(start, ios::beg);
-				char tempRead[150];
-				inFile.read(tempRead, total);
-				strcpy(server_msg, "Recieved from server:\n");
-				strcat(server_msg, tempRead);
+				if(total > (sizeof(server_msg) - 25)){
+					strcpy(server_msg, "Size is larger than the buffer of the message");
+				}			
+				else{
+					inFile.seekg(start, ios::beg);
+					inFile.read(server_msg, total);
+					strcat(server_msg, "\nRecieved from server");
+				}
 			}
 							
 			
@@ -200,6 +203,77 @@ void * socketThread(void *arg){
   		else if(strncmp(client_msg, "write ", 6) == 0){
   			cout << "Writing data to the file" << endl;
   			cout << "Recieved from Client: " << client_msg << endl;
+  			
+  			if(client_msg[6] != '/'){
+				cout << "Incorrect format" << endl; 
+				strcpy(server_msg,"Incorrect format recieved by server no '/': ");
+  				strcat(server_msg, client_msg);
+  				strcat(server_msg, "\nExample should be write /test.txt 100 10");	
+			}
+			string writeFile;
+			string writeInfo;
+			string offset;
+			int i = 6;
+			while(client_msg[i] != ' '){
+					writeFile += client_msg[i];
+					i++;			
+			}
+			i += 1;
+			while(client_msg[i] != ' ' && client_msg[i] != '\0'){
+					writeInfo += client_msg[i];
+					i++;			
+			}
+			//cout << size << endl;
+			i += 1;
+			while(client_msg[i] != ' ' && client_msg[i] != '\0'){
+					offset += client_msg[i];
+					i++;			
+			}
+			if(!is_digits(offset)){
+				cout << "Incorrect format" << endl;
+				strcpy(server_msg,"Incorrect format recieved by server digit error: ");
+  				strcat(server_msg, client_msg);
+  				strcat(server_msg, "\nExample should be write /test.txt 100 10");
+			}
+			else if(writeFile.substr( writeFile.length() - 4 ) != ".txt"){
+				cout << "Incorrect format" << endl; 
+				strcpy(server_msg,"Incorrect format recieved by server no '.txt': ");
+  				strcat(server_msg, client_msg);
+  				strcat(server_msg, "\nExample should be write /test.txt 100 10");	
+			}
+			else if(!inFile.is_open()){
+				cout << "No File is open" << endl; 
+				strcpy(server_msg,"No File is open: ");
+  				strcat(server_msg, writeFile.c_str());		
+			}
+			else if(writeFile.compare(openfilename) != 0){
+				cout << "Current file is not open! " << endl; 
+				cout << openfilename << endl;
+				strcpy(server_msg,"Writing to file is not open, current file open: ");
+  				strcat(server_msg, openfilename.c_str());	
+			}
+			else{
+				int start = stoi(offset);
+				cout << "Starting at: " << offset << ", write data is: \n" << writeInfo << endl;
+				int length = writeInfo.length();
+				char writeArray[length+1];	
+				
+				int fileLength;
+				
+				inFile.seekg (0, ios::end);
+				fileLength = inFile.tellg(); 
+				cout << "Start is: " <<  start << " Filelength is: " << fileLength << endl;
+				
+				if(start > fileLength){
+					strcat(server_msg, "Offset too large");
+				}else{
+					strcpy(writeArray, writeInfo.c_str());			
+					inFile.seekp(start, ios::beg);
+					inFile.write(writeArray, length);
+					strcat(server_msg, "\nWrote to file");
+				}
+			}
+							
   		}
   		else if(strncmp(client_msg, "opendir ", 8) == 0){
   			cout << "Recieved from Client: " << client_msg << endl;
