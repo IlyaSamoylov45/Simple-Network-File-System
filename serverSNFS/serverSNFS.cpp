@@ -107,7 +107,7 @@ void * socketThread(void *arg){
   			cout << "Receive from client failed\n" << endl;
 			break;
   		}
-  		if(strncmp(client_msg, "readdir", 7) == 0){
+  		if(strncmp(client_msg, "readdir ", 8) == 0){
   			cout << "Returning all filenames from the given directory" << endl;
   			cout << "Recieved from Client: " << client_msg << endl;
   			
@@ -131,21 +131,83 @@ void * socketThread(void *arg){
 			}
   		}
   		
-  		else if (strncmp(client_msg, "read", 4) == 0) {
+  		else if (strncmp(client_msg, "read ", 5) == 0) {
   			cout << "Reading bytes from file" << endl;
   			cout << "Recieved from Client: " << client_msg << endl;
-  		}
-  		else if(strncmp(client_msg, "write", 5) == 0){
+  			
+  			if(client_msg[5] != '/'){
+				cout << "Incorrect format" << endl; 
+				strcpy(server_msg,"Incorrect format recieved by server no '/': ");
+  				strcat(server_msg, client_msg);
+  				strcat(server_msg, "\nExample should be read /test.txt");	
+			}
+			string readFile;
+			string size;
+			string offset;
+			int i = 5;
+			while(client_msg[i] != ' '){
+					readFile += client_msg[i];
+					i++;			
+			}
+			i += 1;
+			while(client_msg[i] != ' ' && client_msg[i] != '\0'){
+					size += client_msg[i];
+					i++;			
+			}
+			//cout << size << endl;
+			i += 1;
+			while(client_msg[i] != ' ' && client_msg[i] != '\0'){
+					offset += client_msg[i];
+					i++;			
+			}
+			if(!is_digits(size) || !is_digits(offset)){
+				cout << "Incorrect format" << endl;
+				strcpy(server_msg,"Incorrect format recieved by server digit error: ");
+  				strcat(server_msg, client_msg);
+  				strcat(server_msg, "\nExample should be read /test.txt 100 10");
+			}
+			else if(readFile.substr( readFile.length() - 4 ) != ".txt"){
+				cout << "Incorrect format" << endl; 
+				strcpy(server_msg,"Incorrect format recieved by server no '.txt': ");
+  				strcat(server_msg, client_msg);
+  				strcat(server_msg, "\nExample should be read /test.txt 100 10");	
+			}
+			else if(!inFile.is_open()){
+				cout << "No File is open" << endl; 
+				strcpy(server_msg,"No File is open: ");
+  				strcat(server_msg, readFile.c_str());		
+			}
+			else if(readFile.compare(openfilename) != 0){
+				cout << "Current file is not open! " << endl; 
+				cout << openfilename << endl;
+				strcpy(server_msg,"Written file is not open, current file open: ");
+  				strcat(server_msg, openfilename.c_str());	
+			}
+			else{
+				int total = stoi(size);
+				int start = stoi(offset);
+				cout << "Starting at: " << offset << ", total is: " << total << endl;
+				inFile.seekg(start, ios::beg);
+				char tempRead[150];
+				inFile.read(tempRead, total);
+				strcpy(server_msg, "Recieved from server:\n");
+				strcat(server_msg, tempRead);
+			}
+							
+			
+		}
+			
+  		else if(strncmp(client_msg, "write ", 6) == 0){
   			cout << "Writing data to the file" << endl;
   			cout << "Recieved from Client: " << client_msg << endl;
   		}
-  		else if(strncmp(client_msg, "opendir", 7) == 0){
+  		else if(strncmp(client_msg, "opendir ", 8) == 0){
   			cout << "Recieved from Client: " << client_msg << endl;
   			strcpy(server_msg,"Opening Directory");
   		}
   		
   		
-  		else if(strncmp(client_msg, "open", 4) == 0){
+  		else if(strncmp(client_msg, "open ", 5) == 0){
   			cout << "Opening the file with given directory" << endl;
   			cout << "Recieved from Client: " << client_msg << endl;
   			if(client_msg[5] != '/'){
@@ -199,7 +261,7 @@ void * socketThread(void *arg){
 				}
 			}
   		}
-  		else if(strncmp(client_msg, "close", 5) == 0){
+  		else if(strncmp(client_msg, "close ", 6) == 0){
   			cout << "Closing file with given pathname" << endl;
   			cout << "Recieved from Client: " << client_msg << endl;
   			if(client_msg[6] != '/'){
@@ -253,12 +315,12 @@ void * socketThread(void *arg){
   		}
   		
   		
-  		else if(strncmp(client_msg, "releasedir", 10) == 0){
+  		else if(strncmp(client_msg, "releasedir ", 11) == 0){
   			cout << "Recieved from Client: " << client_msg << endl;
   			strcpy(server_msg,"Releasing Directory");
   		}
   		
-  		else if(strncmp(client_msg, "create", 6) == 0){
+  		else if(strncmp(client_msg, "create ", 7) == 0){
   			cout << "Create the file with given name" << endl;
   			cout << "Recieved from Client: " << client_msg << endl;
   			if(client_msg[7] != '/'){
@@ -301,17 +363,17 @@ void * socketThread(void *arg){
 			}
   		}
   		
-  		else if(strncmp(client_msg, "flush", 5) == 0){
+  		else if(strncmp(client_msg, "flush ", 6) == 0){
   			cout << "Recieved from Client: " << client_msg << endl;
   			strcpy(server_msg,"Recieved flush");
   		}
   		
-  		else if(strncmp(client_msg, "release", 7) == 0){
+  		else if(strncmp(client_msg, "release ", 8) == 0){
   			cout << "Recieved from Client: " << client_msg << endl;
   			strcpy(server_msg,"Recieved release");
   		}
  				
-  		else if(strncmp(client_msg, "mkdir", 5) == 0){
+  		else if(strncmp(client_msg, "mkdir ", 6) == 0){
   			cout << "Making directory with given pathname" << endl;
 			cout << "Recieved from Client: " << client_msg << endl;
 			if(client_msg[6] != '/' || client_msg[7] == '\0' || client_msg[7] == ' '){
@@ -340,11 +402,11 @@ void * socketThread(void *arg){
 			}
   		}
 		
-		else if(strncmp(client_msg, "truncate", 8) == 0){
+		else if(strncmp(client_msg, "truncate ", 9) == 0){
   			cout << "Truncating file" << endl;
   			cout << "Recieved from Client: " << client_msg << endl;
   		}
-  		else if(strncmp(client_msg, "getattr", 7) == 0){
+  		else if(strncmp(client_msg, "getattr ", 8) == 0){
   			cout << "Getting attributes" << endl;
   			cout << "Recieved from Client: " << client_msg << endl;
   			strcpy(server_msg,"getattr success! ");
@@ -539,7 +601,12 @@ int createFile(string createFile){
 	return -1;
 }
 
-
+bool is_digits(string str){
+	if(str.empty()){
+		return false;	
+	}
+   return str.find_first_not_of("0123456789") == std::string::npos;
+}
 
 
 

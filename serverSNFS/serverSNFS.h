@@ -16,6 +16,7 @@
 #include <sys/socket.h>
 #include <dirent.h> 
 #include <fstream>
+#include <sstream>
 
 using namespace std;
 using namespace boost::filesystem;
@@ -27,3 +28,4 @@ void check_directory(path);
 int make_directory(string);
 string getDirectories(string);
 int createFile(string);
+bool is_digits(string);
