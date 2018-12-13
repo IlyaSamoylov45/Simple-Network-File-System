@@ -71,17 +71,19 @@ int main(int argc, char* argv[]){
    
    char server_msg[150];
 	char client_msg[150];
-	string options = "\nProgram will run until you type Quit, \nsystem calls available: \ncreate \nopen \nflush \nrelease \ntruncate \ngetattr \nread \nwrite \nopendir \nreaddir \nreleasedir \nmkdir\n";     
+	char temp[150];
+	//string options = "\nProgram will run until you type Quit, \nsystem calls available: \ncreate \nopen \nflush \nrelease \ntruncate \ngetattr \nread \nwrite \nopendir \nreaddir \nreleasedir \nmkdir\n";     
 	while(1){
-		cout << options << endl;
-    	cin >> client_msg;	
+		//cout << options << endl;
+		cin.getline(client_msg, sizeof(client_msg));
+    
 		//Send msg to server
-		if( send(clientSocket , client_msg , strlen(client_msg) , 0) < 0){
+		if( send(clientSocket , client_msg , sizeof(client_msg) , 0) <= 0){
 			cout << "Client Send failed\n" << endl;
    	}
    
    	//Read the message from the server into the buffer
-    	if(recv(clientSocket, server_msg, sizeof(server_msg), 0) < 0){
+    	if(recv(clientSocket, server_msg, sizeof(server_msg), 0) <= 0){
        	cout << "Receive failed\n" << endl;
     	}	
     

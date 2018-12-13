@@ -1,6 +1,7 @@
 #include "serverSNFS.h"
 
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+path server_directory;
 
 int main(int argc, char* argv[]){
 	if(argc != 5){
@@ -16,7 +17,7 @@ int main(int argc, char* argv[]){
 	//get path of mountable file
 	path curr_path = current_path(); //gets current path
 	path p = argv[4];
-	path server_directory = curr_path / p;
+	server_directory = curr_path / p;
 	check_directory(server_directory);
 	
 	//Create variables 
@@ -101,33 +102,91 @@ void * socketThread(void *arg){
 	while(1){
 		memset(client_msg, 0, sizeof(client_msg));
 		memset(server_msg, 0, sizeof(server_msg));
-  		if(recv(newSocket , client_msg , sizeof(client_msg) , 0) < 0){
+  		if(recv(newSocket , client_msg , sizeof(client_msg) , 0) <= 0){
   			cout << "Receive from client failed\n" << endl;
-  			cout << "Exit socketThread" << endl;
-			close(newSocket);
-			return 0;
+			break;
+  		}
+  		
+  		if (strncmp(client_msg, "read", 4) == 0) {
+  			cout << "Reading bytes from file" << endl;
+  			cout << "Recieved from Client: " << client_msg << endl;
+  		}
+  		else if(strncmp(client_msg, "readdir", 7) == 0){
+  			cout << "Returning all bytes from the given directory" << endl;
+  			cout << "Recieved from Client: " << client_msg << endl;
+  		}
+  		else if(strncmp(client_msg, "write", 5) == 0){
+  			cout << "Writing data to the file" << endl;
+  			cout << "Recieved from Client: " << client_msg << endl;
+  		}
+  		else if(strncmp(client_msg, "open", 4) == 0){
+  			cout << "Opening the file with given directory" << endl;
+  			cout << "Recieved from Client: " << client_msg << endl;
+  		}
+  		else if(strncmp(client_msg, "close", 5) == 0){
+  			cout << "Closing file with given pathname" << endl;
+  			cout << "Recieved from Client: " << client_msg << endl;
+  		}
+  		else if(strncmp(client_msg, "mkdir", 5) == 0){
+  			cout << "Making directory with given pathname" << endl;
+			cout << "Recieved from Client: " << client_msg << endl;
+			if(client_msg[6] != '/' || client_msg[7] == '\0' || client_msg[7] == ' '){
+				cout << "Incorrect format" << endl; 
+				strcpy(server_msg,"Incorrect format recieved by server no '/': ");
+  				strcat(server_msg, client_msg);
+  				strcat(server_msg, "\nExample should be mkdir /test");
+  				
+			}
+			else{
+				string mkdirName;
+				int i = 6;
+				while(client_msg[i] != '\0'){
+					mkdirName += client_msg[i];
+					i++;			
+				}
+				int val = make_directory(mkdirName);
+				if(val == -1){
+					strcpy(server_msg,"Failure creating directory: ");
+  					strcat(server_msg, "-1");
+				}
+				else{
+					strcpy(server_msg,"Success creating directory: ");
+  					strcat(server_msg, "1");
+				}
+			}
+  		}
+		else if(strncmp(client_msg, "truncate", 8) == 0){
+  			cout << "Truncating file" << endl;
+  			cout << "Recieved from Client: " << client_msg << endl;
+  		}
+  		else if(strncmp(client_msg, "getattr", 7) == 0){
+  			cout << "Getting attributes" << endl;
+  			cout << "Recieved from Client: " << client_msg << endl;
+  		}
+  		else{
+			cout << "Incorrect input" << endl; 
+			strcpy(server_msg,"Incorrect input recieved by server: ");
+  			strcat(server_msg, client_msg);
   		}
   		// Send message to the client socket 
   		//pthread_mutex_lock(&lock);
-  		strcpy(server_msg,"Message ");
-  		strcat(server_msg, client_msg);
-  		strcat(server_msg, " recieved by server");
+  		//strcpy(server_msg,"Message ");
+  		//strcat(server_msg, client_msg);
+  		//strcat(server_msg, " recieved by server");
   	
   		//pthread_mutex_unlock(&lock);
-  		cout << "Recieved from Client: " << client_msg << endl;
-  		if(send(newSocket,server_msg,sizeof(server_msg),0) < 0){
+  		if(send(newSocket,server_msg,sizeof(server_msg),0) <= 0){
   			cout << "Send to client failed\n" << endl;
-  			cout << "Exit socketThread" << endl;
-			close(newSocket);
-			return 0;
+			break;
   		}
-  		if(strcmp(client_msg,"Quit") == 0){
-			break;  		
-  		}
+  		//if(strcmp(client_msg,"Quit") == 0){
+		//	break;  		
+  		//}
   	}
   	cout << "Exit socketThread" << endl;
   	close(newSocket);
 }
+
 
 
 //checks to see if two values are the same
@@ -214,7 +273,34 @@ void check_directory(path directory){
 	
 }
 
-
+//mkdir function
+int make_directory(string mkdirName){
+	path newDir = server_directory / mkdirName;
+	
+	cout << "Given path: " << newDir << endl;
+	if(exists(newDir)){                   //checks to see whether path p exists
+		if (is_regular_file(newDir)){      //checks to see whether this is a file
+			cout << "This is already a file\n" << endl;
+			return -1;
+		}       
+		else if (is_directory(newDir)){    // checks if p is directory?
+      	cout << "Already a directory\n" << endl;
+      	return -1;
+    	}
+    	else{
+    		cout << "Neither file nor directory but exists\n" << endl;
+			return -1;
+    	}
+	}
+	try{	
+		create_directories(newDir);
+		cout << "Created Directory\n" << endl;
+	}catch(std::exception const & e){
+		cout << "Failure creating Directory\n" << endl;
+		return -1;			
+	}	
+	return 1;
+}
 
 
 

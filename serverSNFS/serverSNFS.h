@@ -21,3 +21,4 @@ void * socketThread(void *);
 void check_values(string, string);
 void check_port(string, string);
 void check_directory(path);
+int make_directory(string);
