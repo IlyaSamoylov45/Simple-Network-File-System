@@ -277,7 +277,7 @@ int main(int argc, char* argv[]){
 	const char* server = argv[4];
 	cout << "server is: " << server << endl;
 	check_values(argv[5], "-mount");
-	
+	check_directory(argv[6]);
 	fuse_oper.open = fuse_open;
 	fuse_oper.create = fuse_create;
 	fuse_oper.release = fuse_release;
