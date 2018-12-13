@@ -266,10 +266,10 @@ extern "C" int fuse_read (const char *path, char *buf, size_t size, off_t offset
 
 
 int main(int argc, char* argv[]){
-	if(argc < 7){
+	/*if(argc < 7){
 		cout << "Usage is ./clientSNFS -serverport port# -serveraddress address# -mount directory" << endl;
 		exit(EXIT_FAILURE);	
-	}
+	} */
 	check_values(argv[1], "-serverport");
 	check_port(argv[2], "port#");
 	int serverPort = stoi(argv[2]);
@@ -344,10 +344,12 @@ int main(int argc, char* argv[]){
         exit(EXIT_FAILURE);
     }
     else
-        cout << "Client-connect() established" << endl;
-    char** fuseArgs;
-	fuseArgs[0] = argv[6]; // fuse just needs the path for the directory
-	int result = fuse_main(argc, fuseArgs, &fuse_oper, NULL);
+    cout << "Client-connect() established" << endl;
+
+
+    char* fuseArgs[] = {argv[6], argv[6], argv[6]};
+	int fuseArc = sizeof(fuseArgs)/sizeof(fuseArgs[0]) -1;
+	int result = fuse_main(fuseArc, fuseArgs, &fuse_oper, NULL);
     
 }
 
