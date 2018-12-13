@@ -152,10 +152,10 @@ extern "C" int fuse_readdir(const char* path, void* buf, fuse_fill_dir_t filler,
 	strcpy(msg, "");
 	strcat(msg, "readdir ");
 	strcat(msg, path);
-	strcat(msg, " ");
+	//strcat(msg, " ");
 	char offsetS[200]; // convert offset to char*
 	sprintf(offsetS, "%llu", offset);
-	strcat(msg, &offsetS[0]);
+	//strcat(msg, &offsetS[0]);
 	cout << msg << endl;
 	
 	if( send(clientSocket , msg , strlen(msg) , 0) < 0){
@@ -277,7 +277,7 @@ int main(int argc, char* argv[]){
 	const char* server = argv[4];
 	cout << "server is: " << server << endl;
 	check_values(argv[5], "-mount");
-	
+	check_directory(argv[6]);
 	fuse_oper.open = fuse_open;
 	fuse_oper.create = fuse_create;
 	fuse_oper.release = fuse_release;

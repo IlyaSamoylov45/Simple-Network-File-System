@@ -1,5 +1,13 @@
 # Simple-Network-File-System
 
-gcc -o work  -lstdc++ -std=c++11 -lboost_system -lboost_filesystem -lpthread serverSNFS.cpp 
+### How to test -
 
-gcc -o work  -lstdc++ -std=c++11 -lboost_system -lboost_filesystem -lpthread clientSNFS.cpp
+one console:
+- ./serverSNFS -port your_port -mount 'servertmp'
+
+
+second console:
+  - ./clientSNFS -serverport your_port -serveraddress localhost -mount /freespace/local/testfuse
+  - (mount dir can be named whatever but it has to be in freespace)
+  - when you want to recompile/retest client run fusermount -uz /freespace/local/testfuse/ first which demounts the fuse directory
+- to test readdir run ls /freespace/local/testfuse/ 
