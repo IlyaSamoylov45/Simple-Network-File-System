@@ -331,17 +331,11 @@ extern "C" int fuse_read (const char *path, char *buf, size_t size, off_t offset
 
 
 int main(int argc, char* argv[]){
-	struct stat fs;
-    stat("FAKEFILE",&fs);
-	cout << fs.st_mode << endl;
-	cout << fs.st_dev << endl;
-	cout << fs.st_ino << endl;
-	cout << fs.st_nlink << endl;
-	cout << fs.st_uid << endl;
-	/*if(argc < 7){
+
+	if(argc < 7){
 		cout << "Usage is ./clientSNFS -serverport port# -serveraddress address# -mount directory" << endl;
 		exit(EXIT_FAILURE);	
-	} */
+	} 
 	check_values(argv[1], "-serverport");
 	check_port(argv[2], "port#");
 	int serverPort = stoi(argv[2]);
