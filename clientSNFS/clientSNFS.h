@@ -13,6 +13,8 @@
 #include <boost/filesystem.hpp>
 #include <sys/socket.h>
 #include <fuse.h>
+#include <sys/types.h>
+#include <sys/disk.h>
 
 using namespace std;
 using namespace boost::filesystem;
