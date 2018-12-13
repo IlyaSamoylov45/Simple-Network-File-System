@@ -15,6 +15,7 @@
 #include <boost/filesystem.hpp>
 #include <sys/socket.h>
 #include <dirent.h> 
+#include <fstream>
 
 using namespace std;
 using namespace boost::filesystem;

@@ -98,7 +98,8 @@ void * socketThread(void *arg){
 	char server_msg[150];
 	char client_msg[150];
 	int newSocket = *((int *)arg);
-	
+	ifstream inFile;
+	string openfilename = "";
 	while(1){
 		memset(client_msg, 0, sizeof(client_msg));
 		memset(server_msg, 0, sizeof(server_msg));
@@ -142,13 +143,113 @@ void * socketThread(void *arg){
   			cout << "Recieved from Client: " << client_msg << endl;
   			strcpy(server_msg,"Opening Directory");
   		}
+  		
+  		
   		else if(strncmp(client_msg, "open", 4) == 0){
   			cout << "Opening the file with given directory" << endl;
   			cout << "Recieved from Client: " << client_msg << endl;
+  			if(client_msg[5] != '/'){
+				cout << "Incorrect format" << endl; 
+				strcpy(server_msg,"Incorrect format recieved by server no '/': ");
+  				strcat(server_msg, client_msg);
+  				strcat(server_msg, "\nExample should be open /test.txt");	
+			}
+			else{
+				string openFile;
+				int i = 5;
+  				while(client_msg[i] != '\0'){
+					openFile += client_msg[i];
+					i++;			
+				}
+				if(openFile.substr( openFile.length() - 4 ) != ".txt"){
+					cout << "Incorrect format" << endl; 
+					strcpy(server_msg,"Incorrect format recieved by server no '.txt': ");
+  					strcat(server_msg, client_msg);
+  					strcat(server_msg, "\nExample should be open /test.txt");	
+				}
+				else{
+					path temp = server_directory / openFile;
+					string fileLocation = temp.string();
+					cout << fileLocation << endl;
+					if (inFile.is_open()) {
+						cout << "File is already open: " << openfilename << endl;
+						strcpy(server_msg,"Cannot open file, a file is already open: ");
+						
+						//char char_array[150] =
+						cout << openfilename << endl;
+  						strcat(server_msg, openfilename.c_str());	
+  						
+					}
+					else{
+						inFile.open(fileLocation);
+						if(!inFile){
+							cout << "Cannot open file, file does not exist. Creating new file" << endl;
+							strcpy(server_msg,"Cannot open file, file does not exist. Creating new file: ");
+  							strcat(server_msg, openFile.c_str());	
+  							inFile.open(fileLocation,  fstream::in | fstream::out | fstream::trunc);
+							openfilename = openFile;					
+						}
+						else{
+							cout << "Successfully opened file" << endl;
+							strcpy(server_msg,"Successfully opened file: ");
+  							strcat(server_msg, openFile.c_str());	
+  							openfilename = openFile;	
+						}
+					}
+				}
+			}
   		}
   		else if(strncmp(client_msg, "close", 5) == 0){
   			cout << "Closing file with given pathname" << endl;
   			cout << "Recieved from Client: " << client_msg << endl;
+  			if(client_msg[6] != '/'){
+				cout << "Incorrect format" << endl; 
+				strcpy(server_msg,"Incorrect format recieved by server no '/': ");
+  				strcat(server_msg, client_msg);
+  				strcat(server_msg, "\nExample should be open /test.txt");	
+			}
+			else{
+				string openFile;
+				int i = 6;
+  				while(client_msg[i] != '\0'){
+					openFile += client_msg[i];
+					i++;			
+				}
+				if(openFile.substr( openFile.length() - 4 ) != ".txt"){
+					cout << "Incorrect format" << endl; 
+					strcpy(server_msg,"Incorrect format recieved by server no '.txt': ");
+  					strcat(server_msg, client_msg);
+  					strcat(server_msg, "\nExample should be open /test.txt");	
+				}
+				else{
+					if(!inFile.is_open()){
+						cout << "No File is open" << endl; 
+						strcpy(server_msg,"No File is open, tried to close: ");
+  						strcat(server_msg, openFile.c_str());
+  						
+					}
+					else{
+						string closeFileName = openFile;
+						if(closeFileName.compare(openfilename) == 0){
+							cout << "Closing file" << endl; 
+							cout << openfilename << endl;
+							strcpy(server_msg,"Closed: ");
+  							strcat(server_msg, openfilename.c_str());
+  							inFile.close();
+  							openfilename = "";
+						}
+						else{
+							cout << "File :" << endl; 
+							cout << openfilename << " not currently open" <<endl;
+							strcpy(server_msg,"No File named: ");
+  							strcat(server_msg, closeFileName.c_str());
+							strcat(server_msg, " is open. Current open file is: ");
+  							strcat(server_msg, openfilename.c_str());
+						}					
+					} 
+				}
+			}
+  			
   		}
   		
   		
