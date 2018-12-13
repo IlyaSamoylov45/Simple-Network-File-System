@@ -102,10 +102,29 @@ extern "C" int fuse_open(const char *path, struct fuse_file_info *fi)
 
 
 // flush TODO
-// not sure what this does
+// close_file?
 extern "C" int fuse_flush(const char *path, struct fuse_file_info *fi)
 {
-	cout << "flush" << endl;
+	int rc;
+	char msg[5000];
+	char response[1000];
+	strcpy(msg, "");
+	strcat(msg, "close ");
+	strcat(msg, path);
+	cout << msg << endl;
+
+	rc = send(clientSocket , msg , strlen(msg) , 0);
+	if(rc < 0){
+		cout << "failed to send close message\n" << endl;
+		return rc;
+	}
+	rc = recv(clientSocket, response, sizeof(response), 0);
+	if(rc < 0){
+		cout << "failed to receive close response\n" << endl;
+		return rc;
+	}
+	cout << "response recieved is : " << response << " rc is" << rc << endl;
+	
 	return 0;
 }
 
@@ -137,6 +156,8 @@ extern "C" int fuse_truncate(const char *path, off_t length)
 	if(rc < 0){
 		cout << "failed to recieve truncate response\n" << endl;
 		return rc;
+	} else {
+		cout << path <<"sucessfully truncated\n" << endl;
 	}
 
 	return 0;
@@ -221,6 +242,8 @@ extern "C" int fuse_getattr(const char* path, struct stat* st)
 	strcat(msg, path);
 	strcat(msg, " ");
 	cout << msg << endl;
+	cout << "uid" << st->st_uid  << endl;
+	cout << "gid" << st->st_gid  << endl;
 
 	st->st_uid = getuid(); // The owner of the file/directory is the user who mounted the filesystem
 	st->st_gid = getgid(); // The group of the file/directory is the same as the group of the user who mounted the filesystem
@@ -254,13 +277,14 @@ extern "C" int fuse_read (const char *path, char *buf, size_t size, off_t offset
 	char offsetS[200];
 	sprintf(offsetS, "%llu", offset);
 	strcat(msg, &offsetS[0]);
-	//strcat(msg, " ");
+	
+
 	cout << msg << endl;
-	/*
+	
 	if( send(clientSocket , msg , strlen(msg) , 0) < 0){
 		cout << "Client Send failed\n" << endl;
     }
-	cout << "yo" << endl; */
+	cout << "yo" << endl; 
 	return 0;
 }
 
@@ -282,7 +306,6 @@ int main(int argc, char* argv[]){
 	fuse_oper.open = fuse_open;
 	fuse_oper.create = fuse_create;
 	fuse_oper.release = fuse_release;
-	fuse_oper.getattr = fuse_getattr;
 	fuse_oper.readdir = fuse_readdir;
 	fuse_oper.truncate = fuse_truncate;
 	fuse_oper.flush = fuse_flush;
