@@ -64,9 +64,16 @@ extern "C" int fuse_create(const char* path, mode_t mode, struct fuse_file_info 
 	}
 	return rc;
 }
-
 //OPENDIR TODO
 // not sure what use this has since readdir displays files
+
+/*
+Open directory
+Unless the 'default_permissions' mount option is given, this method should check if 
+opendir is permitted for this directory. Optionally opendir may also return an 
+arbitrary filehandle in the fuse_file_info structure, which will be passed to readdir,
+releasedir and fsyncdir.
+*/
 extern "C" int fuse_opendir(const char *path, struct fuse_file_info *fi)
 {
 	cout << "opendir called" << endl;
@@ -101,8 +108,19 @@ extern "C" int fuse_open(const char *path, struct fuse_file_info *fi)
 }
 
 
-// flush TODO
-// close_file?
+/*
+ Possibly flush cached data
+BIG NOTE: This is not equivalent to fsync(). It's not a request to sync dirty data.
+Flush is called on each close() of a file descriptor. So if a filesystem wants to return write 
+errors in close() and the file has cached dirty data, this is a good place to write back data 
+and return any errors. Since many applications ignore close() errors this is not always useful.
+ NOTE: The flush() method may be called more than once for each open(). This happens if more than
+one file descriptor refers to an opened file due to dup(), dup2() or fork() calls. It is not possible
+to determine if a flush is final, so each flush should be treated equally. Multiple write-flush 
+sequences are relatively rare, so this shouldn't be a problem.
+ Filesystems shouldn't assume that flush will always be called after some writes, or that if will be
+called at all.
+ */
 extern "C" int fuse_flush(const char *path, struct fuse_file_info *fi)
 {
 	int rc;
@@ -199,10 +217,20 @@ extern "C" int fuse_readdir(const char* path, void* buf, fuse_fill_dir_t filler,
 
 	return 0;
 }
-//todo release 
-//don't know what this does
+
+/*
+Release an open file
+ Release is called when there are no more references to an open file: all file descriptors 
+are closed and all memory mappings are unmapped.
+ For every open() call there will be exactly one release() call with the same flags and 
+file descriptor. It is possible to have a file opened more than once, in which case only 
+the last release will mean, that no more reads/writes will happen on the file. The return 
+value of release is ignored.
+ */
+
 extern "C" int fuse_release(const char *pathStr, struct fuse_file_info *)
 {
+	
 	return 0;
 }
 
@@ -236,6 +264,7 @@ extern "C" int fuse_mkdir(const char* path, mode_t mode)
 // TODO
 extern "C" int fuse_getattr(const char* path, struct stat* st)
 {
+	
 	char msg[5000];
 	strcpy(msg, "");
 	strcat(msg, "getattr ");
@@ -244,29 +273,32 @@ extern "C" int fuse_getattr(const char* path, struct stat* st)
 	cout << msg << endl;
 	cout << "uid" << st->st_uid  << endl;
 	cout << "gid" << st->st_gid  << endl;
-
+	
 	st->st_uid = getuid(); // The owner of the file/directory is the user who mounted the filesystem
 	st->st_gid = getgid(); // The group of the file/directory is the same as the group of the user who mounted the filesystem
 	st->st_atime = time( NULL ); // The last "a"ccess of the file/directory is right now
 	st->st_mtime = time( NULL );
 	if(strcmp(path, "/") == 0){
+		st->st_size = 0;
 		st->st_mode = S_IFDIR | 0755;
 		st->st_nlink = 2;
 	} else {
 		st->st_mode = S_IFREG | 0644;
 		st->st_nlink = 1;
 		st->st_size = 1024;
-	}
+	}  
+	stat(path, st);
 	return 0;
 }
 
 extern "C" int fuse_read (const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fi){
 	char msg[5000];
+	char response[1024];
 	strcpy(msg, "");
 	strcat(msg, "read ");
 	strcat(msg, path);
 	strcat(msg, " ");
-	
+	int rc;
  
  	char sizeStr[256] = "";
 
@@ -281,20 +313,29 @@ extern "C" int fuse_read (const char *path, char *buf, size_t size, off_t offset
 
 	cout << msg << endl;
 	
-	if( send(clientSocket , msg , strlen(msg) , 0) < 0){
-		cout << "Client Send failed\n" << endl;
-    }
-	cout << "yo" << endl; 
-	return 0;
+	rc = send(clientSocket , msg , strlen(msg) , 0);
+	if(rc < 0){
+		cout << "failed to send read message\n" << endl;
+		return rc;
+	}
+	rc = recv(clientSocket, response, sizeof(response), 0);
+	if(rc < 0){
+		cout << "failed to receive read response\n" << endl;
+		return rc;
+	}
+	memcpy(buf, response + 22, size);
+	cout << "read response recieved is : " << buf << " rc is" << rc << endl;
+	return strlen( response ) - 22;
 }
 
 
 
 int main(int argc, char* argv[]){
-	/*if(argc < 7){
+
+	if(argc < 7){
 		cout << "Usage is ./clientSNFS -serverport port# -serveraddress address# -mount directory" << endl;
 		exit(EXIT_FAILURE);	
-	} */
+	} 
 	check_values(argv[1], "-serverport");
 	check_port(argv[2], "port#");
 	int serverPort = stoi(argv[2]);
