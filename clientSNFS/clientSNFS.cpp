@@ -152,10 +152,10 @@ extern "C" int fuse_readdir(const char* path, void* buf, fuse_fill_dir_t filler,
 	strcpy(msg, "");
 	strcat(msg, "readdir ");
 	strcat(msg, path);
-	strcat(msg, " ");
+	//strcat(msg, " ");
 	char offsetS[200]; // convert offset to char*
 	sprintf(offsetS, "%llu", offset);
-	strcat(msg, &offsetS[0]);
+	//strcat(msg, &offsetS[0]);
 	cout << msg << endl;
 	
 	if( send(clientSocket , msg , strlen(msg) , 0) < 0){
