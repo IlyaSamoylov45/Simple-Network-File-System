@@ -67,9 +67,23 @@ extern "C" int fuse_create(const char* path, mode_t mode, struct fuse_file_info 
 
 //OPENDIR TODO
 // not sure what use this has since readdir displays files
+
+/*
+
+Open directory
+Unless the 'default_permissions' mount option is given, this method should check if 
+opendir is permitted for this directory. Optionally opendir may also return an 
+arbitrary filehandle in the fuse_file_info structure, which will be passed to readdir,
+releasedir and fsyncdir.
+
+*/
+
 extern "C" int fuse_opendir(const char *path, struct fuse_file_info *fi)
 {
 	cout << "opendir called" << endl;
+	
+	
+	
 	return 0;
 }
 
@@ -103,6 +117,25 @@ extern "C" int fuse_open(const char *path, struct fuse_file_info *fi)
 
 // flush TODO
 // not sure what this does
+
+/*
+
+Possibly flush cached data
+BIG NOTE: This is not equivalent to fsync(). It's not a request to sync dirty data.
+Flush is called on each close() of a file descriptor. So if a filesystem wants to return write 
+errors in close() and the file has cached dirty data, this is a good place to write back data 
+and return any errors. Since many applications ignore close() errors this is not always useful.
+
+NOTE: The flush() method may be called more than once for each open(). This happens if more than
+one file descriptor refers to an opened file due to dup(), dup2() or fork() calls. It is not possible
+to determine if a flush is final, so each flush should be treated equally. Multiple write-flush 
+sequences are relatively rare, so this shouldn't be a problem.
+
+Filesystems shouldn't assume that flush will always be called after some writes, or that if will be
+called at all.
+
+*/
+
 extern "C" int fuse_flush(const char *path, struct fuse_file_info *fi)
 {
 	cout << "flush" << endl;
@@ -180,6 +213,20 @@ extern "C" int fuse_readdir(const char* path, void* buf, fuse_fill_dir_t filler,
 }
 //todo release 
 //don't know what this does
+
+/*
+Release an open file
+
+Release is called when there are no more references to an open file: all file descriptors 
+are closed and all memory mappings are unmapped.
+
+For every open() call there will be exactly one release() call with the same flags and 
+file descriptor. It is possible to have a file opened more than once, in which case only 
+the last release will mean, that no more reads/writes will happen on the file. The return 
+value of release is ignored.
+
+*/
+
 extern "C" int fuse_release(const char *pathStr, struct fuse_file_info *)
 {
 	return 0;
