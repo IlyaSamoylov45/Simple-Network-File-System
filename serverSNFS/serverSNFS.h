@@ -26,3 +26,4 @@ void check_port(string, string);
 void check_directory(path);
 int make_directory(string);
 string getDirectories(string);
+int createFile(string);

@@ -206,7 +206,7 @@ void * socketThread(void *arg){
 				cout << "Incorrect format" << endl; 
 				strcpy(server_msg,"Incorrect format recieved by server no '/': ");
   				strcat(server_msg, client_msg);
-  				strcat(server_msg, "\nExample should be open /test.txt");	
+  				strcat(server_msg, "\nExample should be close /test.txt");	
 			}
 			else{
 				string openFile;
@@ -219,7 +219,7 @@ void * socketThread(void *arg){
 					cout << "Incorrect format" << endl; 
 					strcpy(server_msg,"Incorrect format recieved by server no '.txt': ");
   					strcat(server_msg, client_msg);
-  					strcat(server_msg, "\nExample should be open /test.txt");	
+  					strcat(server_msg, "\nExample should be close /test.txt");	
 				}
 				else{
 					if(!inFile.is_open()){
@@ -259,8 +259,46 @@ void * socketThread(void *arg){
   		}
   		
   		else if(strncmp(client_msg, "create", 6) == 0){
+  			cout << "Create the file with given name" << endl;
   			cout << "Recieved from Client: " << client_msg << endl;
-  			strcpy(server_msg,"Recieved Create");
+  			if(client_msg[7] != '/'){
+				cout << "Incorrect format" << endl; 
+				strcpy(server_msg,"Incorrect format recieved by server no '/': ");
+  				strcat(server_msg, client_msg);
+  				strcat(server_msg, "\nExample should be create /test.txt");	
+			}
+			else{
+				string newFile;
+				int i = 7;
+  				while(client_msg[i] != '\0'){
+					newFile += client_msg[i];
+					i++;			
+				}
+				if(newFile.substr( newFile.length() - 4 ) != ".txt"){
+					cout << "Incorrect format" << endl; 
+					strcpy(server_msg,"Incorrect format recieved by server no '.txt': ");
+  					strcat(server_msg, client_msg);
+  					strcat(server_msg, "\nExample should be create /test.txt");	
+				}
+				else if(inFile.is_open()){
+					cout << "A File is open" << endl; 
+					strcpy(server_msg,"Please close file before you create: ");
+  					strcat(server_msg, openfilename.c_str());
+  						
+				}
+				else{
+					int val = createFile(newFile);
+					if(val == -1){
+						strcpy(server_msg,"Failure creating directory: ");
+  						strcat(server_msg, "-1");
+					}
+					else{
+						strcpy(server_msg,"Success creating directory: ");
+  						strcat(server_msg, "1");
+					}
+				}
+			
+			}
   		}
   		
   		else if(strncmp(client_msg, "flush", 5) == 0){
@@ -309,6 +347,8 @@ void * socketThread(void *arg){
   		else if(strncmp(client_msg, "getattr", 7) == 0){
   			cout << "Getting attributes" << endl;
   			cout << "Recieved from Client: " << client_msg << endl;
+  			strcpy(server_msg,"getattr success! ");
+  			//strcat(server_msg, client_msg);
   		}
   		else{
 			cout << "Incorrect input" << endl; 
@@ -326,9 +366,7 @@ void * socketThread(void *arg){
   			cout << "Send to client failed\n" << endl;
 			break;
   		}
-  		//if(strcmp(client_msg,"Quit") == 0){
-		//	break;  		
-  		//}
+  		
   	}
   	cout << "Exit socketThread" << endl;
   	close(newSocket);
@@ -472,7 +510,34 @@ string getDirectories(string readdirName){
 }
 
 
-
+int createFile(string createFile){
+	path newFile = server_directory / createFile;
+	ifstream tempFile;
+	cout << "Given path: " << newFile << endl;
+	if(exists(newFile)){                   //checks to see whether path p exists
+		if (is_regular_file(newFile)){      //checks to see whether this is a file
+			cout << "This is already a file\n" << endl;
+			return -1;
+		}       
+		else if (is_directory(newFile)){    // checks if p is directory?
+      	cout << "Already a directory\n" << endl;
+      	return -1;
+    	}
+    	else{
+    		cout << "Neither file nor directory but exists\n" << endl;
+			return -1;
+    	}
+	}
+	
+	string newpath = newFile.string();
+	tempFile.open(newpath);
+	if(!tempFile){
+		tempFile.open(newpath,  fstream::in | fstream::out | fstream::trunc);
+		tempFile.close();
+		return 1;
+	}
+	return -1;
+}
 
 
 
