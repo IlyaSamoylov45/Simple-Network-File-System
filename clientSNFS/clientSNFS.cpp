@@ -95,16 +95,17 @@ extern "C" int fuse_open(const char *path, struct fuse_file_info *fi)
 		cout << "failed to receive open response\n" << endl;
 		return rc;
 	}
+	cout << "response recieved is : " << response << " rc is" << rc << endl;
 	
-	
-	return rc;
+	return 0;
 }
 
 
 // flush TODO
 // not sure what this does
-extern "C" int fuse_flush(const char *pathStr, struct fuse_file_info *fi)
+extern "C" int fuse_flush(const char *path, struct fuse_file_info *fi)
 {
+	cout << "flush" << endl;
 	return 0;
 }
 
@@ -346,10 +347,10 @@ int main(int argc, char* argv[]){
     else
     cout << "Client-connect() established" << endl;
 
-
-    char* fuseArgs[] = {argv[6], argv[6], argv[6]};
-	int fuseArc = sizeof(fuseArgs)/sizeof(fuseArgs[0]) -1;
-	int result = fuse_main(fuseArc, fuseArgs, &fuse_oper, NULL);
+	
+    char* fuseArgs[] = {"-d", argv[6], "-d"};
+	//int fuseArc = sizeof(fuseArgs)/sizeof(fuseArgs[0]) -1;
+	int result = fuse_main(3, fuseArgs, &fuse_oper, NULL);
     
 }
 
