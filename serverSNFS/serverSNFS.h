@@ -6,13 +6,15 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <errno.h>
+#include <iterator>
+#include <algorithm>
 #include <pthread.h>
 #include <string.h>
 #include <limits.h>
 #include <unistd.h>
 #include <boost/filesystem.hpp>
 #include <sys/socket.h>
-
+#include <dirent.h> 
 
 using namespace std;
 using namespace boost::filesystem;
@@ -22,3 +24,4 @@ void check_values(string, string);
 void check_port(string, string);
 void check_directory(path);
 int make_directory(string);
+string getDirectories(string);

@@ -106,18 +106,41 @@ void * socketThread(void *arg){
   			cout << "Receive from client failed\n" << endl;
 			break;
   		}
-  		
-  		if (strncmp(client_msg, "read", 4) == 0) {
-  			cout << "Reading bytes from file" << endl;
+  		if(strncmp(client_msg, "readdir", 7) == 0){
+  			cout << "Returning all filenames from the given directory" << endl;
   			cout << "Recieved from Client: " << client_msg << endl;
+  			
+  			if(client_msg[8] != '/' || client_msg[9] == '\0' || client_msg[9] == ' '){
+				cout << "Incorrect format" << endl; 
+				strcpy(server_msg,"Incorrect format recieved by server no '/': ");
+  				strcat(server_msg, client_msg);
+  				strcat(server_msg, "\nExample should be readdir /test");
+  				
+			}
+			else{
+				string readdir;
+				int i = 8;
+				while(client_msg[i] != '\0'){
+					readdir += client_msg[i];
+					i++;			
+				}
+				string getNames = getDirectories(readdir);
+				const char * fileNames = getNames.c_str();
+				strcpy(server_msg, fileNames);
+			}
+			
   		}
-  		else if(strncmp(client_msg, "readdir", 7) == 0){
-  			cout << "Returning all bytes from the given directory" << endl;
+  		else if (strncmp(client_msg, "read", 4) == 0) {
+  			cout << "Reading bytes from file" << endl;
   			cout << "Recieved from Client: " << client_msg << endl;
   		}
   		else if(strncmp(client_msg, "write", 5) == 0){
   			cout << "Writing data to the file" << endl;
   			cout << "Recieved from Client: " << client_msg << endl;
+  		}
+  		else if(strncmp(client_msg, "opendir", 7) == 0){
+  			cout << "Recieved from Client: " << client_msg << endl;
+  			strcpy(server_msg,"Opening Directory");
   		}
   		else if(strncmp(client_msg, "open", 4) == 0){
   			cout << "Opening the file with given directory" << endl;
@@ -127,6 +150,28 @@ void * socketThread(void *arg){
   			cout << "Closing file with given pathname" << endl;
   			cout << "Recieved from Client: " << client_msg << endl;
   		}
+  		
+  		
+  		else if(strncmp(client_msg, "releasedir", 10) == 0){
+  			cout << "Recieved from Client: " << client_msg << endl;
+  			strcpy(server_msg,"Releasing Directory");
+  		}
+  		
+  		else if(strncmp(client_msg, "create", 6) == 0){
+  			cout << "Recieved from Client: " << client_msg << endl;
+  			strcpy(server_msg,"Recieved Create");
+  		}
+  		
+  		else if(strncmp(client_msg, "flush", 5) == 0){
+  			cout << "Recieved from Client: " << client_msg << endl;
+  			strcpy(server_msg,"Recieved flush");
+  		}
+  		
+  		else if(strncmp(client_msg, "release", 7) == 0){
+  			cout << "Recieved from Client: " << client_msg << endl;
+  			strcpy(server_msg,"Recieved release");
+  		}
+ 				
   		else if(strncmp(client_msg, "mkdir", 5) == 0){
   			cout << "Making directory with given pathname" << endl;
 			cout << "Recieved from Client: " << client_msg << endl;
@@ -155,6 +200,7 @@ void * socketThread(void *arg){
 				}
 			}
   		}
+		
 		else if(strncmp(client_msg, "truncate", 8) == 0){
   			cout << "Truncating file" << endl;
   			cout << "Recieved from Client: " << client_msg << endl;
@@ -302,8 +348,27 @@ int make_directory(string mkdirName){
 	return 1;
 }
 
-
-
+string getDirectories(string readdirName){
+	path p = server_directory / readdirName;
+	string newPath = p.string();
+	
+	string contains;
+	DIR *d;
+	const char * c = newPath.c_str();
+	
+	struct dirent *dir;
+	d = opendir(c);
+	if (d) {
+    while ((dir = readdir(d)) != NULL) {
+      contains = contains + dir->d_name + " ";
+    }
+    closedir(d);
+  	}
+  else{
+  	contains = "Directory doesn't exist";
+  }
+	return contains;
+}
 
 
 
