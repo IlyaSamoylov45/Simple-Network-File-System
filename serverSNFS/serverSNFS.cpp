@@ -313,30 +313,21 @@ void * socketThread(void *arg){
 					path temp = server_directory / openFile;
 					string fileLocation = temp.string();
 					cout << fileLocation << endl;
-					if (inFile.is_open()) {
-						cout << "File is already open: " << openfilename << endl;
-						strcpy(server_msg,"Cannot open file, a file is already open: ");
-						
-						//char char_array[150] =
-						cout << openfilename << endl;
-  						strcat(server_msg, openfilename.c_str());	
-  						
+					
+					
+					inFile.open(fileLocation);
+					if(!inFile){
+						cout << "Cannot open file, file does not exist. Creating new file" << endl;
+						strcpy(server_msg,"Cannot open file, file does not exist. Creating new file: ");
+  						strcat(server_msg, openFile.c_str());	
+  						inFile.open(fileLocation,  fstream::in | fstream::out | fstream::trunc);
+						openfilename = openFile;					
 					}
 					else{
-						inFile.open(fileLocation);
-						if(!inFile){
-							cout << "Cannot open file, file does not exist. Creating new file" << endl;
-							strcpy(server_msg,"Cannot open file, file does not exist. Creating new file: ");
-  							strcat(server_msg, openFile.c_str());	
-  							inFile.open(fileLocation,  fstream::in | fstream::out | fstream::trunc);
-							openfilename = openFile;					
-						}
-						else{
-							cout << "Successfully opened file" << endl;
-							strcpy(server_msg,"Successfully opened file: ");
-  							strcat(server_msg, openFile.c_str());	
-  							openfilename = openFile;	
-						}
+						cout << "Successfully opened file" << endl;
+						strcpy(server_msg,"Successfully opened file: ");
+  						strcat(server_msg, openFile.c_str());	
+  						openfilename = openFile;	
 					}
 				}
 			}
