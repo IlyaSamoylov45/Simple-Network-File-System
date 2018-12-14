@@ -479,6 +479,61 @@ void * socketThread(void *arg){
 		else if(strncmp(client_msg, "truncate ", 9) == 0){
   			cout << "Truncating file" << endl;
   			cout << "Recieved from Client: " << client_msg << endl;
+  			if(client_msg[9] != '/'){
+				cout << "Incorrect format" << endl; 
+				strcpy(server_msg,"Incorrect format recieved by server no '/': ");
+  				strcat(server_msg, client_msg);
+  				strcat(server_msg, "\nExample should be truncate /test.txt 10");	
+			}
+			else{
+				string trunFile;
+				string offsetTrunc;
+				int i = 9;
+  				while(client_msg[i] != ' '){
+					trunFile += client_msg[i];
+					i++;			
+				}
+				i += 1;
+				while(client_msg[i] != '\0'){
+					offsetTrunc += client_msg[i];
+					i++;			
+				}
+				if(!is_digits(offsetTrunc) || offsetTrunc.empty()){
+					cout << "Incorrect format" << endl;
+					strcpy(server_msg,"Incorrect format recieved by server digit error: ");
+  					strcat(server_msg, client_msg);
+  					strcat(server_msg, "\nExample should be truncate /test.txt 10");
+				}
+				else if(trunFile.substr( trunFile.length() - 4 ) != ".txt"){
+					cout << "Incorrect format" << endl; 
+					strcpy(server_msg,"Incorrect format recieved by server no '.txt': ");
+  					strcat(server_msg, client_msg);
+  					strcat(server_msg, "\nExample should be truncate /test.txt 10");	
+				}
+				else if(!inFile.is_open()){
+					cout << "No File is open" << endl; 
+					strcpy(server_msg,"No File is open: ");
+  					strcat(server_msg, trunFile.c_str());		
+				}
+				else if(trunFile.compare(openfilename) != 0){
+					cout << "Current file is not open! " << endl; 
+					cout << openfilename << endl;
+					strcpy(server_msg,"Written file is not open, current file open: ");
+  					strcat(server_msg, openfilename.c_str());	
+				}
+				else{
+					int end = stoi(offsetTrunc);
+					path p = server_directory / trunFile;
+					int truncVal = truncate((p.string()).c_str(), end);
+					cout << truncVal << endl;
+					if(truncVal == 0){
+						strcpy(server_msg,"Successfully truncated file");
+					}
+					else{
+						strcpy(server_msg,"Truncating failure");
+					}
+				}
+  			}
   		}
   		else if(strncmp(client_msg, "getattr ", 8) == 0){
   			cout << "Getting attributes" << endl;
@@ -492,12 +547,6 @@ void * socketThread(void *arg){
   			strcat(server_msg, client_msg);
   		}
   		// Send message to the client socket 
-  		//pthread_mutex_lock(&lock);
-  		//strcpy(server_msg,"Message ");
-  		//strcat(server_msg, client_msg);
-  		//strcat(server_msg, " recieved by server");
-  	
-  		//pthread_mutex_unlock(&lock);
   		if(send(newSocket,server_msg,sizeof(server_msg),0) <= 0){
   			cout << "Send to client failed\n" << endl;
 			break;

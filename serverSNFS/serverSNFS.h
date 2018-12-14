@@ -17,6 +17,7 @@
 #include <dirent.h> 
 #include <fstream>
 #include <sstream>
+#include <sys/types.h>
 
 using namespace std;
 using namespace boost::filesystem;
