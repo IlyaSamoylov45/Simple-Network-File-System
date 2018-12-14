@@ -177,13 +177,16 @@ void * socketThread(void *arg){
 				strcpy(server_msg,"No File is open: ");
   				strcat(server_msg, readFile.c_str());		
 			}
-			else if(readFile.compare(openfilename) != 0){
-				cout << "Current file is not open! " << endl; 
-				cout << openfilename << endl;
-				strcpy(server_msg,"Written file is not open, current file open: ");
-  				strcat(server_msg, openfilename.c_str());	
-			}
 			else{
+				
+					cout << "Current file is not open we will open it! " << endl; 
+					cout << openfilename << endl;
+					inFile.close();
+					path temp = server_directory / readFile;
+					string fileLocation = temp.string();
+					inFile.open(fileLocation);
+					openfilename = readFile;
+				
 				int total = stoi(size);
 				int start = stoi(offset);
 				cout << "Starting at: " << offset << ", total is: " << total << endl;
@@ -246,13 +249,16 @@ void * socketThread(void *arg){
 				strcpy(server_msg,"No File is open: ");
   				strcat(server_msg, writeFile.c_str());		
 			}
-			else if(writeFile.compare(openfilename) != 0){
-				cout << "Current file is not open! " << endl; 
-				cout << openfilename << endl;
-				strcpy(server_msg,"Writing to file is not open, current file open: ");
-  				strcat(server_msg, openfilename.c_str());	
-			}
 			else{
+				if(writeFile.compare(openfilename) != 0){
+					cout << "Current file is not open we will open it! " << endl; 
+					cout << openfilename << endl;
+					inFile.close();
+					path temp = server_directory / writeFile;
+					string fileLocation = temp.string();
+					inFile.open(fileLocation);
+					openfilename = writeFile;
+				}
 				int start = stoi(offset);
 				cout << "Starting at: " << offset << ", write data is: \n" << writeInfo << endl;
 				int length = writeInfo.length();
@@ -315,24 +321,36 @@ void * socketThread(void *arg){
 					cout << fileLocation << endl;
 					
 					
-					inFile.open(fileLocation);
-					if(!inFile){
-						cout << "Cannot open file, file does not exist. Creating new file" << endl;
-						strcpy(server_msg,"Cannot open file, file does not exist. Creating new file: ");
-  						strcat(server_msg, openFile.c_str());	
-  						inFile.open(fileLocation,  fstream::in | fstream::out | fstream::trunc);
-						openfilename = openFile;					
+					if (inFile.is_open()) {
+						cout << "File is already open: " << openfilename << endl;
+							
+						cout << openfilename << endl;
+						inFile.close();
+						inFile.open(fileLocation);
+						openfilename = openFile;				
 					}
 					else{
-						cout << "Successfully opened file" << endl;
-						strcpy(server_msg,"Successfully opened file: ");
-  						strcat(server_msg, openFile.c_str());	
-  						openfilename = openFile;	
+						inFile.open(fileLocation);
+						if(!inFile){
+							cout << "Cannot open file, file does not exist. Creating new file" << endl;
+							strcpy(server_msg,"Cannot open file, file does not exist. Creating new file: ");
+  							strcat(server_msg, openFile.c_str());	
+  							inFile.open(fileLocation,  fstream::in | fstream::out | fstream::trunc);
+							openfilename = openFile;					
+						}
+						else{
+							cout << "Successfully opened file" << endl;
+							strcpy(server_msg,"Successfully opened file: ");
+  							strcat(server_msg, openFile.c_str());	
+  							openfilename = openFile;	
+						}	
 					}
 				}
 			}
   		}
   		else if(strncmp(client_msg, "close ", 6) == 0){
+			inFile.close();
+			/*
   			cout << "Closing file with given pathname" << endl;
   			cout << "Recieved from Client: " << client_msg << endl;
   			if(client_msg[6] != '/'){
@@ -381,9 +399,9 @@ void * socketThread(void *arg){
 						}					
 					} 
 				}
-			}
+			} */
   			
-  		}
+  		} 
   		
   		
   		else if(strncmp(client_msg, "releasedir ", 11) == 0){
@@ -543,11 +561,13 @@ void * socketThread(void *arg){
 			strcpy(server_msg,"Incorrect input recieved by server: ");
   			strcat(server_msg, client_msg);
   		}
-  		// Send message to the client socket 
-  		if(send(newSocket,server_msg,sizeof(server_msg),0) <= 0){
-  			cout << "Send to client failed\n" << endl;
-			break;
-  		}
+  		// Send message to the client socket
+	    //if(strncmp(client_msg, "read ", 5) == 0){
+			if(send(newSocket,server_msg,sizeof(server_msg),0) <= 0){
+				cout << "Send to client failed\n" << endl;
+				break;
+			}
+		//}
   		
   	}
   	cout << "Exit socketThread" << endl;

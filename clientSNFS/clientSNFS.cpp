@@ -14,17 +14,20 @@ extern "C" int fuse_open(const char *path, struct fuse_file_info *fi)
 {
 	int rc;
 	char msg[5000];
-	char response[1000];
+	char response[5000];
 	strcpy(msg, "");
 	strcat(msg, "open ");
 	strcat(msg, path);
 	cout << msg << endl;
 
+	sleep(.1);
 	rc = send(clientSocket , msg , strlen(msg) , 0);
+	sleep(.1);
 	if(rc < 0){
 		cout << "failed to send open message\n" << endl;
 		return rc;
 	}
+	
 	rc = recv(clientSocket, response, sizeof(response), 0);
 	if(rc < 0){
 		cout << "failed to receive open response\n" << endl;
@@ -41,29 +44,35 @@ extern "C" int fuse_write(const char *path, const char *data, size_t size, off_t
 	fuse_open(path, fi);
 	int rc;
 	char msg[5000];
-	char response[1000];
+	char response[5000];
 	strcpy(msg, "");
 	strcat(msg, "write ");
 	strcat(msg, path);
-	strcat(msg, " ");
-	strcat(msg, data);
 	strcat(msg, " ");
 
 	char offsetS[200];
 	sprintf(offsetS, "%llu", offset);
 	strcat(msg, &offsetS[0]);
-	cout << msg << endl;
+	strcat(msg, " ");
+
+	strcat(msg, data);
 	
+
+	cout << msg << endl;
+	sleep(.2);
 	rc = send(clientSocket , msg , strlen(msg) , 0);
+	sleep(.2);
 	if(rc < 0){
 		cout << "failed to send write\n" << endl;
 		return rc;
 	}
+	
 	rc = recv(clientSocket, response, sizeof(response), 0);
 	if(rc < 0){
 		cout << "failed to recieve write response\n" << endl;
 		return rc;
 	}
+	
 	
 	return strlen(data);
 }
@@ -74,22 +83,26 @@ extern "C" int fuse_create(const char* path, mode_t mode, struct fuse_file_info 
 {
 	int rc;
 	char msg[5000];
-	char response[1000];
+	char response[5000];
 	strcpy(msg, "");
 	strcat(msg, "create ");
 	strcat(msg, path);
 
 	cout << msg << endl;
+	sleep(.2);
 	rc = send(clientSocket , msg , strlen(msg) , 0);
+	sleep(.2);
 	if(rc < 0){
 		cout << "failed to send create message\n" << endl;
 		return rc;
 	}
+	
 	rc = recv(clientSocket, response, sizeof(response), 0);
 	if(rc < 0){
 		cout << "failed to receive create response\n" << endl;
 		return rc;
 	}
+	
 	return rc;
 }
 //OPENDIR TODO
@@ -128,22 +141,26 @@ extern "C" int fuse_flush(const char *path, struct fuse_file_info *fi)
 {
 	int rc;
 	char msg[5000];
-	char response[1000];
+	char response[5000];
 	strcpy(msg, "");
 	strcat(msg, "close ");
 	strcat(msg, path);
 	cout << msg << endl;
 
+	sleep(.6);
 	rc = send(clientSocket , msg , strlen(msg) , 0);
+	sleep(.6);
 	if(rc < 0){
 		cout << "failed to send close message\n" << endl;
 		return rc;
 	}
+	
 	rc = recv(clientSocket, response, sizeof(response), 0);
 	if(rc < 0){
 		cout << "failed to receive close response\n" << endl;
 		return rc;
 	}
+	
 	cout << "response recieved is : " << response << " rc is" << rc << endl;
 	
 	return 0;
@@ -156,7 +173,7 @@ extern "C" int fuse_truncate(const char *path, off_t length)
 {
 	int rc;
 	char msg[5000];
-	char response[1000];
+	char response[5000];
 	strcpy(msg, "");
 	strcat(msg, "truncate ");
 	strcat(msg, path);
@@ -168,11 +185,14 @@ extern "C" int fuse_truncate(const char *path, off_t length)
 	//strcat(msg, " ");
 	cout << msg << endl;
 
+	sleep(.2);
 	rc = send(clientSocket , msg , strlen(msg) , 0);
+	sleep(.2);
 	if(rc < 0){
 		cout << "failed to send truncate\n" << endl;
 		return rc;
 	}
+	
 	rc = recv(clientSocket, response, sizeof(response), 0);
 	if(rc < 0){
 		cout << "failed to recieve truncate response\n" << endl;
@@ -180,6 +200,7 @@ extern "C" int fuse_truncate(const char *path, off_t length)
 	} else {
 		cout << path <<"sucessfully truncated\n" << endl;
 	}
+	
 
 	return 0;
 }
@@ -191,7 +212,7 @@ extern "C" int fuse_readdir(const char* path, void* buf, fuse_fill_dir_t filler,
 		off_t offset, struct fuse_file_info *fi)
 {
 	char msg[5000];
-	char response[1024];
+	char response[5000];
 	strcpy(msg, "");
 	strcat(msg, "readdir ");
 	strcat(msg, path);
@@ -209,7 +230,8 @@ extern "C" int fuse_readdir(const char* path, void* buf, fuse_fill_dir_t filler,
 	if(recv(clientSocket, response, sizeof(response), 0) < 0){
        cout << "client failed to recieve readdir response\n" << endl;
 	   return -1;
-    } 
+    }
+	
 	//split response by spaces and add all files to filler
 	char * split;
 	split = strtok (response," ");
@@ -241,7 +263,7 @@ extern "C" int fuse_release(const char *pathStr, struct fuse_file_info *)
 extern "C" int fuse_mkdir(const char* path, mode_t mode)
 {	
 	int rc = 0;
-	char response[1024];
+	char response[5000];
 	char msg[5000];
 	strcpy(msg, "");
 	strcat(msg, "mkdir ");
@@ -254,12 +276,14 @@ extern "C" int fuse_mkdir(const char* path, mode_t mode)
 		cout << "client failed to send mkdir message\n" << endl;
 		return rc;
 	}
+	
 	rc =recv(clientSocket, response, sizeof(response), 0);
 	if(rc < 0){
 		cout << "client failed to recieve mkdir response\n" << endl;
 	}
 	
-	return rc;
+	
+	return 0;
 	
 }
 
@@ -281,6 +305,10 @@ extern "C" int fuse_getattr(const char* path, struct stat* st)
 	st->st_gid = getgid(); // The group of the file/directory is the same as the group of the user who mounted the filesystem
 	st->st_atime = time( NULL ); // The last "a"ccess of the file/directory is right now
 	st->st_mtime = time( NULL );
+	
+	if(strcmp(path, "/meme") == 0){
+		return -ENOENT;
+	}
 	if(strcmp(path, "/") == 0){
 		st->st_size = 0;
 		st->st_mode = S_IFDIR | 0755;
@@ -290,14 +318,15 @@ extern "C" int fuse_getattr(const char* path, struct stat* st)
 		st->st_nlink = 1;
 		st->st_size = 1024;
 	}  
-	stat(path, st);
+	
 	return 0;
 }
 
 extern "C" int fuse_read (const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fi){
 	char msg[5000];
-	char response[1024];
+	char response[5000];
 	strcpy(msg, "");
+	strcpy(response, "");
 	strcat(msg, "read ");
 	strcat(msg, path);
 	strcat(msg, " ");
@@ -316,7 +345,9 @@ extern "C" int fuse_read (const char *path, char *buf, size_t size, off_t offset
 
 	cout << msg << endl;
 	
+	sleep(.2);
 	rc = send(clientSocket , msg , strlen(msg) , 0);
+	sleep(.2);
 	if(rc < 0){
 		cout << "failed to send read message\n" << endl;
 		return rc;
@@ -326,9 +357,9 @@ extern "C" int fuse_read (const char *path, char *buf, size_t size, off_t offset
 		cout << "failed to receive read response\n" << endl;
 		return rc;
 	}
-	memcpy(buf, response + 22, size);
+	memcpy(buf, response, size);
 	cout << "read response recieved is : " << buf << " rc is" << rc << endl;
-	return strlen( response ) - 22;
+	return strlen( response );
 }
 
 
