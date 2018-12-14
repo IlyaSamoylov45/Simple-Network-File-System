@@ -95,8 +95,8 @@ int main(int argc, char* argv[]){
 
 
 void * socketThread(void *arg){
-	char server_msg[150];
-	char client_msg[150];
+	char server_msg[5000];
+	char client_msg[5000];
 	int newSocket = *((int *)arg);
 	fstream inFile;
 	string openfilename = "";
