@@ -208,7 +208,7 @@ void * socketThread(void *arg){
 				cout << "Incorrect format" << endl; 
 				strcpy(server_msg,"Incorrect format recieved by server no '/': ");
   				strcat(server_msg, client_msg);
-  				strcat(server_msg, "\nExample should be write /test.txt 100 10");	
+  				strcat(server_msg, "\nExample should be write /test.txt 100 example input");	
 			}
 			string writeFile;
 			string writeInfo;
@@ -220,26 +220,26 @@ void * socketThread(void *arg){
 			}
 			i += 1;
 			while(client_msg[i] != ' ' && client_msg[i] != '\0'){
-					writeInfo += client_msg[i];
+					offset += client_msg[i];
 					i++;			
 			}
 			//cout << size << endl;
 			i += 1;
-			while(client_msg[i] != ' ' && client_msg[i] != '\0'){
-					offset += client_msg[i];
+			while(client_msg[i] != '\0'){
+					writeInfo += client_msg[i];
 					i++;			
 			}
 			if(!is_digits(offset)){
 				cout << "Incorrect format" << endl;
 				strcpy(server_msg,"Incorrect format recieved by server digit error: ");
   				strcat(server_msg, client_msg);
-  				strcat(server_msg, "\nExample should be write /test.txt 100 10");
+  				strcat(server_msg, "\nExample should be write /test.txt 100 text to write in");
 			}
 			else if(writeFile.substr( writeFile.length() - 4 ) != ".txt"){
 				cout << "Incorrect format" << endl; 
 				strcpy(server_msg,"Incorrect format recieved by server no '.txt': ");
   				strcat(server_msg, client_msg);
-  				strcat(server_msg, "\nExample should be write /test.txt 100 10");	
+  				strcat(server_msg, "\nExample should be write /test.txt 100 text to write in");	
 			}
 			else if(!inFile.is_open()){
 				cout << "No File is open" << endl; 
@@ -260,8 +260,10 @@ void * socketThread(void *arg){
 				
 				int fileLength;
 				
-				inFile.seekg (0, ios::end);
-				fileLength = inFile.tellg(); 
+				int begin = inFile.tellg();
+				inFile.seekg(0, ios::end); 
+				int end = inFile.tellg();
+				fileLength = end - begin;
 				cout << "Start is: " <<  start << " Filelength is: " << fileLength << endl;
 				
 				if(start > fileLength){
@@ -271,6 +273,10 @@ void * socketThread(void *arg){
 					inFile.seekp(start, ios::beg);
 					inFile.write(writeArray, length);
 					strcat(server_msg, "\nWrote to file");
+					inFile.close();
+					path temp = server_directory / openfilename;
+					string fileLocation = temp.string();
+					inFile.open(fileLocation);
 				}
 			}
 							
