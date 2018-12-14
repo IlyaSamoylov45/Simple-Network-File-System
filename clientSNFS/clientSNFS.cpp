@@ -8,9 +8,37 @@ static struct fuse_operations fuse_oper = {
 	0,
 };
 
-//write TODO	
-extern "C" int fuse_write(const char *path, const char *data, size_t size, off_t offset, struct fuse_file_info *)
+//open 
+//
+extern "C" int fuse_open(const char *path, struct fuse_file_info *fi)
 {
+	int rc;
+	char msg[5000];
+	char response[1000];
+	strcpy(msg, "");
+	strcat(msg, "open ");
+	strcat(msg, path);
+	cout << msg << endl;
+
+	rc = send(clientSocket , msg , strlen(msg) , 0);
+	if(rc < 0){
+		cout << "failed to send open message\n" << endl;
+		return rc;
+	}
+	rc = recv(clientSocket, response, sizeof(response), 0);
+	if(rc < 0){
+		cout << "failed to receive open response\n" << endl;
+		return rc;
+	}
+	cout << "response recieved is : " << response << " rc is" << rc << endl;
+	
+	return 0;
+}
+
+//write TODO	
+extern "C" int fuse_write(const char *path, const char *data, size_t size, off_t offset, struct fuse_file_info *fi)
+{
+	fuse_open(path, fi);
 	int rc;
 	char msg[5000];
 	char response[1000];
@@ -37,7 +65,7 @@ extern "C" int fuse_write(const char *path, const char *data, size_t size, off_t
 		return rc;
 	}
 	
-	return 0;
+	return strlen(data);
 }
 
 //create
@@ -80,32 +108,7 @@ extern "C" int fuse_opendir(const char *path, struct fuse_file_info *fi)
 	return 0;
 }
 
-//open TODO
-//
-extern "C" int fuse_open(const char *path, struct fuse_file_info *fi)
-{
-	int rc;
-	char msg[5000];
-	char response[1000];
-	strcpy(msg, "");
-	strcat(msg, "open ");
-	strcat(msg, path);
-	cout << msg << endl;
 
-	rc = send(clientSocket , msg , strlen(msg) , 0);
-	if(rc < 0){
-		cout << "failed to send open message\n" << endl;
-		return rc;
-	}
-	rc = recv(clientSocket, response, sizeof(response), 0);
-	if(rc < 0){
-		cout << "failed to receive open response\n" << endl;
-		return rc;
-	}
-	cout << "response recieved is : " << response << " rc is" << rc << endl;
-	
-	return 0;
-}
 
 
 /*
