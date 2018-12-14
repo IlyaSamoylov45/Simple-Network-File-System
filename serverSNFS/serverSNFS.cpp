@@ -193,7 +193,7 @@ void * socketThread(void *arg){
 				else{
 					inFile.seekg(start, ios::beg);
 					inFile.read(server_msg, total);
-					strcat(server_msg, "\nRecieved from server");
+					cout <<"Server msg: " <<  server_msg <<endl;
 				}
 			}
 							

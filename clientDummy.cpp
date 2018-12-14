@@ -69,9 +69,9 @@ int main(int argc, char* argv[]){
     }
     cout << "Client-connect() established" << endl;
    
-   char server_msg[150];
-	char client_msg[150];
-	char temp[150];
+   char server_msg[5000];
+	char client_msg[5000];
+	char temp[5000];
 	//string options = "\nProgram will run until you type Quit, \nsystem calls available: \ncreate \nopen \nflush \nrelease \ntruncate \ngetattr \nread \nwrite \nopendir \nreaddir \nreleasedir \nmkdir\n";     
 	while(1){
 		//cout << options << endl;
